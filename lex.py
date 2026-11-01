@@ -163,9 +163,6 @@ class Lexer:
             else:   # Keyword
                 token = Token(tokText, keyword)
 
-            tokText = self.source[startPos : self.curPos + 1] # Get the substring.
-            token = Token(tokText, tokenType.NUMBER)
-
         else:                                               #invalid token
             self.abort("Unknown token: " + self.curChar)
 
