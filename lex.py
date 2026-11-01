@@ -67,12 +67,16 @@ class Lexer:
 
     #skip comments in the code
     def skipComment(self):
-        pass
+        if self.curChar == '#':              # '#' defines a commented line when added at the start
+            while self.curChar != '\n':      # if '#' is encountered, everything until next line is skipped
+                self.nextChar()
 
     #return the next token
     #This function classifies some commonly used tokens(symbols)
     def getToken(self):
         self.skipWhitespace()
+        self.skipComment()
+        token = None
         if self.curChar == '+':
             token = Token(self.curChar, tokenType.PLUS)
         elif self.curChar == '-': 
@@ -115,6 +119,53 @@ class Lexer:
             token = Token(self.curChar, tokenType.NEWLINE)
         elif self.curChar == '\0':                          #End of File
             token = Token('', tokenType.EOF)
+        elif self.curChar == '\"':                          #get characters within double quotes
+            self.nextChar()
+            startPos = self.curPos
+
+            while self.curChar != '\"':
+                if self.curChar == '\r' or self.curChar == '\n' or self.curChar == '\t' or self.curChar == '\\' or self.curChar == '%':
+                    self.abort("Illegal character in string.")  #we won't allow special characters in the strings to 
+                                                                #preserve the leftover sanity
+                self.nextChar()
+            tokText = self.source[startPos : self.curPos]    #get the substring
+            token = Token(tokText, tokenType.STRING)
+        elif self.curChar.isdigit():
+            # Leading character is a digit, so this must be a number.
+            # Get all consecutive digits and decimal if there is one.
+            startPos = self.curPos
+            while self.peek().isdigit():
+                self.nextChar()
+            if self.peek() == '.': # Decimal!
+                self.nextChar()
+
+                # Must have at least one digit after decimal.
+                if not self.peek().isdigit(): 
+                    # Error!
+                    self.abort("Illegal character in number.")
+                while self.peek().isdigit():
+                    self.nextChar()
+            tokText = self.source[startPos : self.curPos + 1]
+            token = Token(tokText, tokenType.NUMBER)
+
+        elif self.curChar.isalpha():  #checks if the current character is an alphabet
+            # Leading character is a letter, so this must be an identifier or a keyword.
+            # Get all consecutive alpha numeric characters.
+            startPos = self.curPos
+            while self.peek().isalnum():
+                self.nextChar()
+
+            # Check if the token is in the list of keywords.
+            tokText = self.source[startPos : self.curPos + 1] # Get the substring.
+            keyword = Token.checkIfKeyword(tokText)
+            if keyword == None: # Identifier
+                token = Token(tokText, tokenType.IDENT)
+            else:   # Keyword
+                token = Token(tokText, keyword)
+
+            tokText = self.source[startPos : self.curPos + 1] # Get the substring.
+            token = Token(tokText, tokenType.NUMBER)
+
         else:                                               #invalid token
             self.abort("Unknown token: " + self.curChar)
 
@@ -125,3 +176,12 @@ class Token:
     def __init__(self, tokenText, tokenKind):
         self.text = tokenText  #The token's actual text(to be used by identifiers, strings and numbers)
         self.kind = tokenKind  #The type that the token is classified as
+    @staticmethod
+    def checkIfKeyword(tokenText):
+        for kind in tokenType:
+            # Relies on all keyword enum values being 1XX.
+            if kind.name == tokenText and kind.value >= 100 and kind.value < 200:
+                return kind
+        return None
+
+
