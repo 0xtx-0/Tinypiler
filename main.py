@@ -1,11 +1,12 @@
 from lex import *
 
 def main():
-    source = "DOES IT WORK??"
+    source = "+- */> >= = != \n"
     lexer = Lexer(source)
 
-    while lexer.peek() != '\0':
-        print(lexer.curChar)
-        lexer.nextChar()
-
+    token = lexer.getToken()
+    while token.kind != tokenType.EOF:
+        print(token.kind)
+        token = lexer.getToken()
+        
 main()
