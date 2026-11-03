@@ -47,3 +47,40 @@ This part is slightly tricky because we also have to keep operator precedence in
 To achieve different levels of precedence, we organise the grammar rules sequencially. The operators with higher precedence will be placed lower in the grammar rule so that the ones with lower precedence are processed first. eg:
     (a+b-c) * d
     the grammar rule definition will follow the order: rule(+,-) -> rule(*,/)
+
+
+#### Emitting code
+The emitter will convert the tiny code to appropriate C code. It does this by appending a bunch of strings while following the parse tree of the tiny source code.
+
+```
+Input Tiny code:
+    `PRINT index * 3`
+
+Parse tree:
+
+                                            Statement
+                                               /\
+                                              /  \
+                                             /    \
+                                            /      \
+                                         PRINT    expression
+                                                     |
+                                                    Term
+                                                     /|\
+                                                    / | \
+                                                   /  |  \
+                                                  /   |   \
+                                                 /    |    \
+                                               unary  *   unary
+                                                |           |
+                                              primary     primary
+                                                |           |
+                                            Identifier    Number   
+                                                |           |
+                                              Index         3
+
+Resulting C code:
+    `printf("%.2f\n",(float)(index * 3)` 
+```
+
+Since tiny doesn't have any datatypes for floating point representation, just use float for numbers so that small fractional parts are also covered
